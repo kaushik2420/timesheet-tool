@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timesheet Tool</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+</head>
+<body>
+  <div style="position: absolute; top: 10px; right: 20px;">
+    <form action="{{ url_for('logout') }}" method="get">
+        <button class="btn-secondary" style="padding: 8px 12px;">Logout</button>
+    </form>
+</div>
+
+  <!-- Surveysparrow widget for ticket-->
+      <div id="ss_survey_widget"></div>
+      <script id="SS_SCRIPT">function sparrowLaunch(opts){var e="ss-widget",t="script",a=document,r=window,l=localStorage;var s,n,c,rm=a.getElementById('SS_SCRIPT');r.SS_WIDGET_TOKEN="tt-rXnMFlEE3Zk";r.SS_ACCOUNT="kaushiksurveysparrow.surveysparrow.com";r.SS_SURVEY_NAME="Timesheet-tool-feedback-survey";if(!a.getElementById(e) && !l.getItem('removed-ss-widget-tt-rXnMFlEE3Zk')){var S=function(){S.update(arguments)};S.args=[];S.update=function(e){S.args.push(e)};r.SparrowLauncher=S;s=a.getElementsByTagName(t);c=s[s.length-1];n=a.createElement(t);n.type="text/javascript";n.async=!0;n.id=e;n.src=["https://","kaushiksurveysparrow.surveysparrow.com/widget/",r.SS_WIDGET_TOKEN,"?","customParams=",JSON.stringify(opts)].join("");c.parentNode.insertBefore(n,c);r.SS_VARIABLES=opts;rm.parentNode.removeChild(rm);}};</script>
+      <script>sparrowLaunch({/*add custom params here*/})</script>
+
+    <div class="container">
+        <!-- Left Menu Pane -->
+        <div class="menu">
+            <a href="#" data-tab="timesheet-tab" class="logo-link">
+                <img src="/static/images/logo.png" alt="SurveySparrow Logo" class="logo">
+            </a>
+
+            <button class="menu-button active" data-tab="timesheet-tab">Timesheet</button>
+            <button class="menu-button" data-tab="reports-tab">Reports</button>
+            <!--<button class="menu-button" data-tab="pipeline-tab">Pipeline</button> -->
+            <button class="menu-button" data-tab="projects-tab">Projects</button>
+          <button class="menu-button" data-tab="product-issues-tab">Product Issues</button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content">
+            <!-- Timesheet Tab -->
+            <div id="timesheet-tab" class="tab-content active">
+                <h1>Timesheet</h1>
+                <!-- UI for adding filters -->
+                <div class="filters">
+                    <div class="form-group">
+                        <label for="filter-project-name">Project Name</label>
+                        <select id="filter-project-name">
+                            <option value="">All</option>
+                            <!-- Dynamic project names will be added here -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-resource-name">Resource Name</label>
+                        <select id="filter-resource-name">
+                            <option value="">All</option>
+                            <!-- Dynamic resource names will be added here -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-task-type">Task Type</label>
+                        <select id="filter-task-type">
+                            <option value="">All</option>
+                            <option value="internal">Internal</option>
+                            <option value="external">External</option>
+                            <option value="meetings">Meetings</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-start-date">Start Date</label>
+                        <input type="date" id="filter-start-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-end-date">End Date</label>
+                        <input type="date" id="filter-end-date">
+                    </div>
+                    <button id="apply-filters" class="btn-primary">Apply Filters</button>
+                    <button id="reset-filters" class="btn-secondary">Reset Filters</button>
+                </div>
+                <div class="form-container">
+                    <button id="add-entry">+ Add Entry</button>
+                    <button id="import-timesheet">Import</button>
+                    <button id="export-timesheet">Export</button>
+                </div>
+                <div class="table-container">
+                    <h2>Existing Entries</h2>
+                    <table id="timesheet-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Project Name</th>
+                                <th>Task Type</th>
+                                <th>Task Name</th>
+                                <th>Resource Name</th>
+                                <th>Handling time (in hours)</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Dynamic rows will be added here -->
+                        </tbody>
+                    </table>
+                    <div class="pagination-container">
+                        <button id="jump-to-first" class="btn-secondary">Jump to 1st</button>
+                        <button id="prev-page" class="btn-secondary">Previous</button>
+                        <div id="page-numbers" class="page-links"></div>
+                        <button id="next-page" class="btn-secondary">Next</button>
+                        <button id="jump-to-last" class="btn-secondary">Jump to last</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="reports-tab" class="tab-content hidden">
+                <h1>Reports</h1>
+                <div class="table-container">
+                    <h2>Bandwidth utilization</h2>
+                    <!-- Unique Filter Dropdown -->
+                    <div class="form-group">
+                        <label for="resource-quarter-filter">Filter by Quarter</label>
+                        <select id="resource-quarter-filter">
+                            <option value="all" selected>All Quarters</option>
+                        </select>
+                    </div>
+                    <table id="reports-table">
+                        <thead>
+                            <tr>
+                                <th>Resource Name</th>
+                                <th>Total Hours</th>
+                                <th>Quarter</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reports-body">
+                            <!-- Resource-based report rows will be dynamically added here -->
+                        </tbody>
+                    </table>
+                    <div class="pagination-container" id="resource-report-pagination"></div>
+                </div>
+                <!-- Quarterly Revenue Report -->
+                <div class="table-container">
+                    <h2>Quarterly Revenue Report</h2>
+                    <!-- Quarter Filter Dropdown -->
+                    <div class="form-group">
+                        <label for="quarter-filter">Filter by Quarter</label>
+                        <select id="quarter-filter">
+                            <option value="all" selected>All Quarters</option>
+                            <!-- Options will be dynamically populated -->
+                        </select>
+                    </div>
+                    <table id="quarterly-revenue-table">
+                        <thead>
+                            <tr>
+                                <th>Quarter</th>
+                                <th>Category</th> <!-- Added column for Closed/Pipeline -->
+                                <th>Total Revenue (as of current date)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quarterly-revenue-body">
+                            <!-- Quarterly revenue rows will be dynamically added here -->
+                        </tbody>
+                    </table>
+                    <div class="pagination-container" id="revenue-report-pagination"></div>
+                </div>
+
+                <div class="table-container">
+                    <h2>Time spent on projects</h2>
+                    <table id="projects-table">
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Total Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-body">
+                            <!-- Project-based report rows will be dynamically added here -->
+                        </tbody>
+                    </table>
+                    <div class="pagination-container" id="project-report-pagination"></div>
+                </div>
+            </div>
+
+            <!-- Pipeline Tab
+            <div id="pipeline-tab" class="tab-content hidden">
+                <h1>Pipeline</h1>
+                <div class="form-container">
+                    <button id="add-pipeline-entry">+ Add Entry</button>
+                </div>
+                <div class="table-container">
+                    <h2>Pipeline Entries</h2>
+                    <table id="pipeline-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Company Name</th>
+                                <th>ACV</th>
+                                <th>Implementation Amount</th>
+                                <th>Region</th>
+                                <th>AE Name</th>
+                                <th>SE Name</th>
+                                <th>Hubspot Deal URL</th>
+                                <th>Project Plan URL</th>
+                                <th>Expected Close Date</th>
+                                <th>Stage</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pipeline-table-body">
+                            Pipeline rows will be dynamically added here
+                        </tbody>
+                    </table>
+                </div>
+            </div> -->
+
+            <!-- Projects Tab -->
+            <div id="projects-tab" class="tab-content hidden">
+                <h1>Projects</h1>
+                <!-- Project Summary Box -->
+                <div id="projects-summary" class="summary-box"></div>
+
+            <!--    <div class="filters">
+                  <div class="form-group">
+                      <label for="filter-status">Status</label>
+                      <select id="filter-status">
+                          <option value="">All</option>
+                          <option value="Red">Red</option>
+                          <option value="Amber">Amber</option>
+                          <option value="Green">Green</option>
+                      </select>
+                  </div>
+                  <div class="form-group">
+                      <label for="filter-region">Region</label>
+                      <select id="filter-region">
+                          <option value="">All</option>
+                          <option value="ANZ/APAC">ANZ/APAC</option>
+                          <option value="India">India</option>
+                          <option value="MEA">MEA</option>
+                          <option value="EU/UK">EU/UK</option>
+                          <option value="US East">US East</option>
+                          <option value="US West">US West</option>
+                      </select>
+                  </div>
+                  <div class="form-group">
+                      <label for="filter-project-started">Project Started</label>
+                      <select id="filter-project-started">
+                          <option value="">All</option>
+                          <option value="Yes">Yes</option>
+                          <option value="No">No</option>
+                      </select>
+                  </div>
+                  <div class="form-group">
+                      <label for="filter-project-completed">Project Completed</label>
+                      <select id="filter-project-completed">
+                          <option value="">All</option>
+                          <option value="Yes">Yes</option>
+                          <option value="No">No</option>
+                      </select>
+                  </div>
+                  <button id="apply-project-filters" class="btn-primary">Apply Filters</button>
+                  <button id="reset-project-filters" class="btn-secondary">Reset Filters</button>
+              </div>
+              <div class="pagination">
+                  <button id="first-project-page" class="btn-primary">Jump to First</button>
+                  <button id="prev-project-page" class="btn-secondary">Previous</button>
+                  <div id="project-pagination-numbers" class="scrollable-pagination"></div>
+                  <button id="next-project-page" class="btn-secondary">Next</button>
+                  <button id="last-project-page" class="btn-primary">Jump to Last</button>
+              </div> -->
+
+                <div class="form-container">
+                    <button id="add-project-entry">+ Add Project</button>
+                    <button id="import-projects" class="btn-secondary">Import</button>
+                    <!--<button id="export-filtered-projects">Export</button>-->
+                </div>
+                <div class="export-buttons" style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px;">
+                   <button id="export-all-projects" class="btn-secondary">Export All Projects</button>
+                   <button id="export-filtered-projects" class="btn-secondary">Export Filtered Projects</button>
+                 </div>
+                <div class="table-container">
+                    <h2>Existing Projects</h2>
+                    <div class="filters">
+                        <div class="form-group">
+                          <label for="filter-start-date">Start Date (From)</label>
+                          <input type="date" id="filter-start-date">
+                        </div>
+                        <div class="form-group">
+                          <label for="filter-end-date">Start Date (To)</label>
+                          <input type="date" id="filter-end-date">
+                        </div>
+                        <div class="form-group">
+                          <label for="filter-region">Region</label>
+                          <select id="filter-region">
+                            <option value="">All</option>
+                            <option value="ANZ/APAC">ANZ/APAC</option>
+                            <option value="India">India</option>
+                            <option value="MEA">MEA</option>
+                            <option value="EU/UK">EU/UK</option>
+                            <option value="US East">US East</option>
+                            <option value="US West">US West</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label for="filter-started">Project Started</label>
+                          <select id="filter-started">
+                            <option value="">All</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label for="filter-completed">Project Completed</label>
+                          <select id="filter-completed">
+                            <option value="">All</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                          </select>
+                        </div>
+                        <button id="apply-project-filters" class="btn-primary">Apply Filters</button>
+                        <button id="reset-project-filters" class="btn-secondary">Reset Filters</button>
+                      </div>
+
+                    <table id="projects-table">
+                        <thead>
+                            <tr>
+                                <th>Customer Name</th>
+                                <th>Implementation Cost (in USD)</th>
+                                <th>Order Form</th>
+                                <th>Scope of Work</th>
+                                <th>Sales Name</th>
+                                <th>Solution Engineer Name</th>
+                                <th>Start Date</th>
+                                <th>Expected Close Date</th>
+                                <th>Status</th>
+                                <th>Region</th>
+                                <th>Project Started</th>
+                                <th>Project Completed</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-table-body">
+                            <!-- Project rows will be dynamically added here -->
+                        </tbody>
+                    </table>
+                    <!-- ✅ Pagination Container for Projects Tab -->
+                    <div class="pagination-container" id="projects-pagination">
+                    <!--  <button id="first-project-page" class="btn-secondary">Jump to First</button> -->
+                  <!--    <button id="prev-project-page" class="btn-secondary">Previous</button> -->
+                      <div id="project-pagination-numbers" class="page-links"></div>
+                <!--      <button id="next-project-page" class="btn-secondary">Next</button> -->
+                    <!--  <button id="last-project-page" class="btn-secondary">Jump to Last</button> -->
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Product Issues Tab -->
+            <div id="product-issues-tab" class="tab-content hidden">
+                <h1>Product Issues</h1>
+
+                <!-- Filters Section -->
+                <div class="filters">
+                    <div class="form-group">
+                        <label for="filter-issue-type">Issue Type</label>
+                        <select id="filter-issue-type">
+                            <option value="">All</option>
+                            <option value="Bug">Bug</option>
+                            <option value="Enhancement">Enhancement</option>
+                            <option value="Feature Request">Feature Request</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-raised-on">Raised On</label>
+                        <input type="date" id="filter-raised-on">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-current-status">Current Status</label>
+                        <select id="filter-current-status">
+                            <option value="">All</option>
+                            <option value="Feasibility check">Feasibility check</option>
+                            <option value="WIP">WIP</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Not accepted">Not accepted</option>
+                            <option value="Delayed">Delayed</option>
+                        </select>
+                    </div>
+                    <button id="apply-product-filters" class="btn-primary">Apply Filters</button>
+                    <button id="reset-product-filters" class="btn-secondary">Reset Filters</button>
+                </div>
+
+                <!-- Buttons Section -->
+              <!--  <div id="product-issue-summary" class="summary-box"></div> -->
+                <div class="form-container">
+                    <button id="add-product-issue">+ Add Issue</button>
+                    <button id="import-product-issues" class="btn-secondary">Import</button>
+                </div>
+
+                <!-- Table Section -->
+                <div class="table-container">
+                    <h2>Existing Issues</h2>
+                    <table id="product-issues-table">
+                        <thead>
+                            <tr>
+                                <th>Issue Type</th>
+                                <th>Jira/L2 Ticket</th>
+                                <th>Raised On</th>
+                                <th>ETA</th>
+                                <th>Project Name</th>
+                                <th>Current Status</th>
+                                <th>Use Case</th>
+                                <th>Chargeable</th>
+                                <th>Region</th>
+                                <th>Comments</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-issues-table-body">
+                            <!-- Issues will be dynamically added here -->
+                        </tbody>
+                    </table>
+                    <!-- ✅ Pagination Container -->
+                    <div id="product-issues-pagination" class="pagination-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding a new timesheet entry -->
+    <div id="entry-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Add New Timesheet Entry</h2>
+            <form id="entry-form">
+                <div class="form-group">
+                    <label for="project-name">Project Name</label>
+                    <select id="project-name" required>
+                     <option value="" disabled selected>Select project name</option>
+                     <!-- Options will be dynamically added here -->
+                 </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-type">Task Type</label>
+                    <select id="task-type" required>
+                        <option value="" disabled selected>Select task type</option>
+                        <option value="internal">Internal</option>
+                        <option value="external">External</option>
+                        <option value="meetings">Meetings</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="resource-name">Resource Name</label>
+                    <select id="resource-name" required>
+                        <option value="" disabled selected>Select resource name</option>
+                        <option value="Sriram PR">Sriram PR</option>
+                        <option value="Yaswanth">Yaswanth</option>
+                        <option value="Sibhi S">Sibhi S</option>
+                        <option value="Kaushik">Kaushik</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-name">Task Name</label>
+                    <input type="text" id="task-name" placeholder="Enter task name" required>
+                </div>
+                <div class="form-group">
+                    <label for="hours-worked">Hours Worked</label>
+                    <input type="number" id="hours-worked" placeholder="Enter hours worked" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-primary">Submit</button>
+                    <button type="button" class="btn-secondary" id="close-modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for adding new project entry -->
+    <div id="project-modal" class="modal hidden">
+        <div class="modal-content">
+          <h2 id="project-modal-title">Add New Project</h2>
+            <form id="project-form" enctype="multipart/form-data">
+              <input type="hidden" id="project-id" name="project_id">
+                <div class="form-group">
+                    <label for="customer-name">Customer Name</label>
+                    <input type="text" id="customer-name" name="customer_name" placeholder="Enter customer name" required>
+                </div>
+                <div class="form-group">
+                    <label for="implementation-cost">Implementation Cost</label>
+                    <input type="number" id="implementation-cost" name="implementation_cost" placeholder="Enter implementation cost" required>
+                </div>
+                <div class="form-group">
+                    <label for="order-form">Order Form</label>
+                    <input type="file" id="order-form" name="order_form">
+                </div>
+                <div class="form-group">
+                    <label for="scope-of-work">Scope of Work</label>
+                    <input type="file" id="scope-of-work" name="scope_of_work">
+                </div>
+                <div class="form-group">
+                    <label for="sales-name">Sales Name</label>
+                    <input type="text" id="sales-name" name="sales_name" placeholder="Enter sales name" required>
+                </div>
+                <div class="form-group">
+                    <label for="solution-engineer-name">Solution Engineer Name</label>
+                    <input type="text" id="solution-engineer-name" name="solution_engineer_name" placeholder="Enter SE name" required>
+                </div>
+                <div class="form-group">
+                    <label for="start-date">Start Date</label>
+                    <input type="date" id="start-date" name="start_date">
+                </div>
+                <div class="form-group">
+                    <label for="expected-close-date">Expected Close Date</label>
+                    <input type="date" id="expected-close-date" name="expected_close_date">
+                </div>
+                <div class="form-group">
+                    <label for="status">Project Status (RAG)</label>
+                    <select id="status" name="status" required>
+                        <option value="" disabled selected>Select Status</option>
+                        <option value="Red">Red</option>
+                        <option value="Amber">Amber</option>
+                        <option value="Green">Green</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                  <label for="region">Region</label>
+                  <select id="region" name="region" required>
+                      <option value="" disabled selected>Select Region</option>
+                      <option value="ANZ/APAC">ANZ/APAC</option>
+                      <option value="India">India</option>
+                      <option value="MEA">MEA</option>
+                      <option value="EU/UK">EU/UK</option>
+                      <option value="US East">US East</option>
+                      <option value="US West">US West</option>
+                  </select>
+              </div>
+              <div class="form-group">
+                  <label for="project-started">Project Started</label>
+                  <select id="project-started" name="project_started">
+                      <option value="No" selected>No</option>
+                      <option value="Yes">Yes</option>
+                  </select>
+              </div>
+              <div class="form-group">
+                  <label for="project-completed">Project Completed</label>
+                  <select id="project-completed" name="project_completed">
+                      <option value="No" selected>No</option>
+                      <option value="Yes">Yes</option>
+                  </select>
+              </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-primary">Submit</button>
+                    <button type="button" class="btn-secondary" id="close-project-modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+  <!-- for adding modal for import page -->
+  <div id="import-modal" class="modal hidden">
+    <div class="modal-content">
+        <h2>Import Entries</h2>
+        <form id="import-form">
+            <div class="form-group">
+                <label for="import-file">Select CSV File</label>
+                <input type="file" id="import-file" name="file" accept=".csv" required>
+            </div>
+            <input type="hidden" id="import-type" value="">
+            <div class="form-buttons">
+                <button type="submit" class="btn-primary">Import</button>
+                <button type="button" class="btn-secondary" id="close-import-modal">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <!-- Add Product Issue Modal -->
+    <div id="product-issue-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Add Product Issue</h2>
+        <form id="product-issue-form">
+          <!-- Hidden input to store issue ID -->
+            <input type="hidden" id="product-issue-id">
+            <div class="form-group">
+                <label for="issue-type">Issue Type<span style="color:red;">*</span></label>
+                <select id="issue-type" required>
+                    <option value="Bug">Bug</option>
+                    <option value="Enhancement">Enhancement</option>
+                    <option value="Feature Request">Feature Request</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="jira-ticket">Jira/L2 Ticket Link<span style="color:red;">*</span></label>
+                <input type="text" id="jira-ticket" required>
+            </div>
+
+            <div class="form-group">
+                <label for="raised-on">Raised On<span style="color:red;">*</span></label>
+                <input type="date" id="raised-on" required>
+            </div>
+
+            <div class="form-group">
+                <label for="eta">ETA</label>
+                <input type="text" id="eta">
+            </div>
+
+            <div class="form-group">
+                <label for="project-name-product-issues">Project Name</label>
+                <select id="project-name-product-issues"></select> <!-- Populate dynamically -->
+            </div>
+
+            <div class="form-group">
+                <label for="current-status">Current Status</label>
+                <select id="current-status">
+                    <option value="Feasibility check">Feasibility check</option>
+                    <option value="WIP">WIP</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Not accepted">Not accepted</option>
+                    <option value="Delayed">Delayed</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="use-case">Use Case Document Link</label>
+                <input type="text" id="use-case">
+            </div>
+
+            <div class="form-group">
+                <label for="chargeable">Chargeable</label>
+                <select id="chargeable">
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+              <label for="region">Region</label>
+                <select id="region">
+                    <option value="" disabled selected>Select Region</option>
+                    <option value="ANZ/APAC">ANZ/APAC</option>
+                    <option value="India">India</option>
+                    <option value="MEA">MEA</option>
+                    <option value="EU/UK">EU/UK</option>
+                    <option value="US East">US East</option>
+                    <option value="US West">US West</option>
+                </select>
+            </div>
+
+          <div class="form-group">
+            <label for="comments">Comments</label>
+            <input type="text" id="comments" placeholder="Add any comments">
+          </div>
+
+            <button type="submit" class="btn-primary">Submit</button>
+            <button type="button" id="close-product-issue-modal" class="btn-secondary">Cancel</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Import Modal for product issues tab -->
+<div id="import-product-issues-modal" class="modal hidden">
+    <div class="modal-content">
+        <h2>Import Product Issues</h2>
+        <form id="import-product-issues-form" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="import-file">Choose CSV File:</label>
+                <input type="file" id="import-product-file" name="file" accept=".csv" required>
+            </div>
+            <div class="form-buttons">
+                <button type="submit" class="btn-primary">Import</button>
+                <button type="button" class="btn-secondary" id="close-import-product-issue-modal">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
